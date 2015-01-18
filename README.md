@@ -7,5 +7,5 @@
 
 ## Uses
 
-* (par2|http://parchive.sourceforge.net/)
-* (gdrive|https://github.com/prasmussen/gdrive)
+* [par2](http://parchive.sourceforge.net/ "Project page")
+* [gdrive](https://github.com/prasmussen/gdrive "Project page")
