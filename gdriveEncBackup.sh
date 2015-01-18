@@ -1,22 +1,22 @@
 #!/bin/bash
 ######################################################################
-#	Backup Script with Encryption													
+#  Backup Script with Encryption													
 #																					
-# 	Compresses with tar and algo of choice, encrypts with 							
-#   GnuPG public Key, shreds the tar, creates par2 volumes 							
-#	then uploads to Google drive.													
-# 	The tar will contain only the files newer than last backup.						
+#  Compresses with tar and algo of choice, encrypts with 							
+#  GnuPG public Key, shreds the tar, creates par2 volumes 							
+#  then uploads to Google drive.													
+#  The tar will contain only the files newer than last backup.						
 #																					
-#	Tested on Ubuntu Thrusty													
+#  Tested on Ubuntu Thrusty													
 #		
-#	Needs:																		
-#	GnuPG (with a trused PubKey in the Keyring)									
-#	par2 (http://parchive.sourceforge.net/)										
-#	gdrive (https://github.com/prasmussen/gdrive)								
-#	GoogleDrive 																
+#  Needs:																		
+#  GnuPG (with a trused PubKey in the Keyring)									
+#  par2 (http://parchive.sourceforge.net/)										
+#  gdrive (https://github.com/prasmussen/gdrive)								
+#  GoogleDrive 																
 #																					
-#		usage:																		
-#gdriveEncBackup.sh [Source] [Destination] [Name] [Email] [DriveParent]	[compressor]
+#  usage:																		
+#  gdriveEncBackup.sh [Source] [Destination] [Name] [Email] [DriveParent]	[compressor]
 ######################################################################
 
 ######################################################################
@@ -24,13 +24,13 @@
 #		Backup Options
 #
 ######################################################################
-RECEPIENT_EMAIL="jon@doe.com"							# Emmail for Encryption. (in Keychain and trusted)
-BACKUP_DESTINATION="/mnt/destination/directory/path/"	# Destination Dir (absolute path)
-BACKUP_SOURCE="/mnt/source/directory"					# Source dir (absolute path)
-BACKUP_NAME="backup-name"								# Name of the Backup (Will be in filename)
-BASE_DIR="-C /"											# Base Dir for Tar archive
-COMPRESSOR="xz"											# lzma,gzip,bzip2,lzip,xz,lzop
-PAR2_REDUNDANCY="30"									# % of Redundancy the PAR2 shall have
+RECEPIENT_EMAIL="jon@doe.com"                  # Emmail for Encryption. (in Keychain and trusted)
+BACKUP_DESTINATION="/mnt/destination/path/"    # Destination Dir (absolute path)
+BACKUP_SOURCE="/mnt/source/directory"          # Source dir (absolute path)
+BACKUP_NAME="backup-name"                      # Name of the Backup (Will be in filename)
+BASE_DIR="-C /"                                # Base Dir for Tar archive
+COMPRESSOR="xz"                                # lzma,gzip,bzip2,lzip,xz,lzop
+PAR2_REDUNDANCY="30"                           # % of Redundancy the PAR2 shall have
 GOOGLE_DRIVE_PARENT_FOLDER_ID="SomeScrambleStringFromGoogle" # Parent ID of Google Drive can be found with drive list
 ###################################################################
 
@@ -71,7 +71,7 @@ PAR2_OPTIONS="-r${PAR2_REDUNDANCY} -qq"
 
 
 
-WHOLE_SCRIPT_TIME_START=$(date +%s)					# Record Script Start Time
+WHOLE_SCRIPT_TIME_START=$(date +%s)	  # Record Script Start Time
 TIMESATMP=$(date +%Y-%m-%d)
 
 #####################################################################
@@ -114,7 +114,7 @@ function uploadFile() {
 function calculateTimeUsed {
 	TIME_START=$1
 	TIME_FINISHED=$2
-	if [[ ( $1 = "" || $2 = "") ]]; then	# Wrong usage, no parameters.
+	if [[ ( $1 = "" || $2 = "") ]]; then   # Wrong usage, no parameters.
 		return 1
 	fi
 	TIME_FINISHED_WHOLE_SCRIPT=$(date +%s)
