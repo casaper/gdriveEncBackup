@@ -1,37 +1,38 @@
 #!/bin/bash
-#####################################################################################
-#	Backup Script with Encryption													#
-#																					#
-# 	Compresses with tar and algo of choice, encrypts with 							#
-#   GnuPG public Key, shreds the tar, creates par2 volumes 							#
-#	then uploads to Google drive.													#
-# 	The tar will contain only the files newer than last backup.						#
-#																					#
-#		Tested on Ubuntu Thrusty													#
-#		Needs:																		#
-#		GnuPG (with a trused PubKey in the Keyring)									#
-#		par2 (http://parchive.sourceforge.net/)										#
-#		gdrive (https://github.com/prasmussen/gdrive)								#
-#		GoogleDrive 																#
-#																					#
-#		usage:																		#
-#gdriveEncBackup.sh [Source] [Destination] [Name] [Email] [DriveParent]	[compressor]#
-#####################################################################################
+######################################################################
+#	Backup Script with Encryption													
+#																					
+# 	Compresses with tar and algo of choice, encrypts with 							
+#   GnuPG public Key, shreds the tar, creates par2 volumes 							
+#	then uploads to Google drive.													
+# 	The tar will contain only the files newer than last backup.						
+#																					
+#	Tested on Ubuntu Thrusty													
+#		
+#	Needs:																		
+#	GnuPG (with a trused PubKey in the Keyring)									
+#	par2 (http://parchive.sourceforge.net/)										
+#	gdrive (https://github.com/prasmussen/gdrive)								
+#	GoogleDrive 																
+#																					
+#		usage:																		
+#gdriveEncBackup.sh [Source] [Destination] [Name] [Email] [DriveParent]	[compressor]
+######################################################################
 
-##################################################################################### 
+######################################################################
 #
 #		Backup Options
 #
-#####################################################################################
-RECEPIENT_EMAIL="jon@doe.com"									# Emmail for Encryption. (in Keychain and trusted)
-BACKUP_DESTINATION="/mnt/destination/directory/path/"			# Destination Dir (absolute path)
-BACKUP_SOURCE="/mnt/source/directory"							# Source dir (absolute path)
-BACKUP_NAME="backup-name"										# Name of the Backup (Will be in filename)
-BASE_DIR="-C /"													# Base Dir for Tar archive
-COMPRESSOR="xz"													# lzma,gzip,bzip2,lzip,xz,lzop
-PAR2_REDUNDANCY="30"											# % of Redundancy the PAR2 shall have
-GOOGLE_DRIVE_PARENT_FOLDER_ID="SomeScrambleStringFromGoogle"	# Parent ID of Google Drive can be found with drive list
-######################################################################################
+######################################################################
+RECEPIENT_EMAIL="jon@doe.com"							# Emmail for Encryption. (in Keychain and trusted)
+BACKUP_DESTINATION="/mnt/destination/directory/path/"	# Destination Dir (absolute path)
+BACKUP_SOURCE="/mnt/source/directory"					# Source dir (absolute path)
+BACKUP_NAME="backup-name"								# Name of the Backup (Will be in filename)
+BASE_DIR="-C /"											# Base Dir for Tar archive
+COMPRESSOR="xz"											# lzma,gzip,bzip2,lzip,xz,lzop
+PAR2_REDUNDANCY="30"									# % of Redundancy the PAR2 shall have
+GOOGLE_DRIVE_PARENT_FOLDER_ID="SomeScrambleStringFromGoogle" # Parent ID of Google Drive can be found with drive list
+###################################################################
 
 if [[ ! $1 = ""  ]]; then
 	BACKUP_SOURCE=$1
@@ -61,9 +62,9 @@ if [[ ! $LAST_BACKUP_DATE = "" ]]; then
 fi
 
 
-##############################################################
+#####################################################################
 ###  Program options
-##############################################################
+#####################################################################
 TAR_OPTIONS="--acls --xattrs --${COMPRESSOR} ${NEWER} ${BASE_DIR}" 
 GPG_OPTIONS="-q --batch --yes -q --compress-algo none"
 PAR2_OPTIONS="-r${PAR2_REDUNDANCY} -qq"
@@ -73,14 +74,12 @@ PAR2_OPTIONS="-r${PAR2_REDUNDANCY} -qq"
 WHOLE_SCRIPT_TIME_START=$(date +%s)					# Record Script Start Time
 TIMESATMP=$(date +%Y-%m-%d)
 
-##############################################################
-##############################################################
+#####################################################################
 ###  FUNCTIONS
-##############################################################
-##############################################################
+#####################################################################
 
 ## GoogleDrive Folder creator
-# uses https://github.com/prasmussen/gdrive
+# uses https://github.com/prasmussen/gdriv
 function createDriveFolder() {
 	DRIVE_FOLDER_NAME=$1
 	DRIVE_FOLDER_CREATE_REPLY=$(drive folder -p $2 -t ${DRIVE_FOLDER_NAME})
@@ -206,9 +205,9 @@ if [[ $(( $BACKUP_DESTINATION_FREE - $BACKUP_SOURCE_SIZE)) -lt $(( 100 * 1024 ))
 	exit 1
 fi
 
-###############################
+#####################################################################
 ##### Compress
-##############################
+#####################################################################
  
 TAR_FILE_NAME="${BACKUP_NAME}-${TIMESATMP}.tar.${COMPRESSOR}"
 echo -e "\e[32mCompression starts:\e[0m ${BACKUP_SOURCE} is beeing tared with ${COMPRESSOR} to ${BACKUP_DESTINATION}${TAR_FILE_NAME}"	
@@ -228,9 +227,9 @@ else
 fi
 
 
-###############################
+#####################################################################
 ##### Encrypt 
-##############################
+#####################################################################
 TAR_FILE_SIZE=$(du -s ${BACKUP_DESTINATION}${TAR_FILE_NAME} | tr '\t' ';' | cut -d';' -f1)
 BACKUP_DESTINATION_FREE=$(df --output=avail /mnt/backup-one/ | tr '\n' ';' | cut -d';' -f2)
 if [[ $(($BACKUP_DESTINATION_FREE - $TAR_FILE_SIZE)) -lt $(( 100 * 1024 )) ]]; then
@@ -255,9 +254,9 @@ else
 	logger -t EncTarBak -p local0.info "tar compression successfull. Time taken: ${GPG_TIME_LOG}"
 	echo -e "\e[32mEncryption finished:\e[0m Encrypting the file ${GPG_FILE_NAME} took: ${GPG_TIME_HUMAN}."
 fi
-###############################
+#####################################################################
 ##### Create PAR2
-##############################
+#####################################################################
 PAR2_FILE_SIZE_CALC_STRING="print '%d' % (${TAR_FILE_SIZE}*0.${PAR2_REDUNDANCY})"
 PAR2_FILE_SIZE=$(python -c "${PAR2_FILE_SIZE_CALC_STRING}")
 BACKUP_DESTINATION_FREE=$(df --output=avail /mnt/backup-one/ | tr '\n' ';' | cut -d';' -f2)
@@ -284,11 +283,9 @@ else
 fi
 shred -u ${BACKUP_DESTINATION}$TAR_FILE_NAME
 
-#############################################################
-#############################################################
+#####################################################################
 ##   UPload files to Google Drive
-#############################################################
-#############################################################
+#####################################################################
 GDRIVE_FOLDER_ID=$(createDriveFolder $TIMESATMP $GOOGLE_DRIVE_PARENT_FOLDER_ID)
 if [[ $? -eq 0 ]]; then
 	echo -e "\e[32mGoole Drive folder created:\e[0m Name $TIMESATMP, Id: $GDRIVE_FOLDER_ID"
