@@ -53,8 +53,8 @@ if [[ ! $6 = ""  ]]; then
 	COMPRESSOR=$6
 fi
 # Check if incremental
-if [[ -e DataBackup-Compress-Encrypt-PAR2.sh.last.txt ]]; then
-	LAST_BACKUP_DATE=$(cat DataBackup-Compress-Encrypt-PAR2.sh.last.txt | tr '\n' ' ')
+if [[ -e gdriveEncBackup.sh.last.txt ]]; then
+	LAST_BACKUP_DATE=$(cat gdriveEncBackup.sh.last.txt | tr '\n' ' ')
 fi
 # if incremental, set the tar --newer option
 if [[ ! $LAST_BACKUP_DATE = "" ]]; then
