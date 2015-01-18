@@ -1,8 +1,8 @@
 # gdriveEncBackup
 
-* Creates incremental Tar backup
+* creates incremental Tar backup
 * encrypts it with GnuPG PubKey
-* creats par2 volumes for redundancy
+* creates par2 volumes for redundancy
 * uploads the gpg encrypted archive plus par2 sets to gDrive
 
 ## Uses
