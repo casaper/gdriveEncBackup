@@ -100,7 +100,7 @@ function uploadFile() {
 	FILE_PATH=$2
 	DRIVE_UPLOAD_REPLY=$(drive upload -p $PARENT_ID -f $FILE_PATH)
 	if [[ $? -eq 0 ]]; then
-		echo $(echo $FILE_UPLOAD_REPLY | grep -Po "(?<=Id: ).*(?= Title\:)")
+		echo $(echo $DRIVE_UPLOAD_REPLY | grep -Po "(?<=Id: ).*(?= Title\:)")
 		return 0
 	elif [[ $? -eq 1 ]]; then
 		echo "Something went wrong"
