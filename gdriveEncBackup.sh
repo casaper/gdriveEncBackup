@@ -388,13 +388,14 @@ if [[ $? -eq 0 ]]; then
 	"GnuPG":{
 		"Key ID" : "'$RECEPIENT_EMAIL'",
 		"GnuPG Options" : "'$GPG_OPTIONS'"
-	},
-	"Process Time" :
-	{
-		"Start"   : "'$(date --iso-8601='seconds' --date="@${GPG_TIME_START}")'",
-		"End" 	  : "'$(date --iso-8601='seconds' --date="@${GPG_TIME_FINISHED}")'",
-		"Elapsed" : "'$(($GPG_TIME_FINISHED - $GPG_TIME_START))'"
+		"Process Time" :
+		{
+			"Start"   : "'$(date --iso-8601='seconds' --date="@${GPG_TIME_START}")'",
+			"End" 	  : "'$(date --iso-8601='seconds' --date="@${GPG_TIME_FINISHED}")'",
+			"Elapsed" : "'$(($GPG_TIME_FINISHED - $GPG_TIME_START))'"
+		}
 	}
+		
 }'
 	echo -e "\e[32mUploaded successfully:\e[0m $GPG_FILE_NAME has Id: $GPG_FILE_UPLOAD_ID"
 else
@@ -430,74 +431,81 @@ WHOLE_SCRIPT_TIME_HUMAN=$(calculateTimeUsed $WHOLE_SCRIPT_TIME_START $WHOLE_SCRI
 WHOLE_SCRIPT_TIME_LOG=$(calculateTimeUsed $WHOLE_SCRIPT_TIME_START $WHOLE_SCRIPT_TIME_FINISHED "log")
 BACKUP_JSON_RECORD='
 {
-	"Backup Name" : "'$BACKUP_NAME'",
-	"Source" :
-		{
-			"Path" : "'$BACKUP_SOURCE'",
-			"Size" : "'$(getFileDiskUsage ${BACKUP_SOURCE} b)'"
-		},
-	"Destination" :
-	{
-		"Path" : "'$BACKUP_DESTINATION'",
-		"Free" :
-		{
-			"Start" : "'$(( $BACKUP_DESTINATION_FREE_START * 1024))'",
-			"End" 	: "'$(getMountSpaceFree $BACKUP_DESTINATION b)'"
-		}
-	},
-	"Host" : "'$(hostname -f)'",
-	"OS":"'$(uname -a)'",
-	"Time" :
-	{
-		"Start"   : "'$WHOLE_SCRIPT_TIME_START_ISO8601'",
-		"End"     : "'$(date --iso-8601="seconds" --date="@${WHOLE_SCRIPT_TIME_FINISHED}")'",
-		"Elapsed" : "'$(($WHOLE_SCRIPT_TIME_FINISHED - $WHOLE_SCRIPT_TIME_START))'"
-	},
-	"Files"	:
-		[
-			{
-				"Name" : "'$TAR_FILE_NAME'",
-				"Path" : "'$BACKUP_DESTINATION'",
-				"Type" : "Tar Archive",
-				"Mime-Type" : "application/x-tar",
-				"Size" : '$(( ${TAR_FILE_SIZE} * 1024 ))',
-				"Log" : "'$TAR_PACK_LOG_FILE_PACKED'",
-				"Process Time" :
+	"Backup":{
+		"Name" : "'$BACKUP_NAME'",
+		"Host" : {
+			"Source Directory" :
 				{
-					"Start"   : "'$(date --iso-8601="seconds" --date="@$TAR_TIME_START")'",
-					"End" 	  : "'$(date --iso-8601="seconds" --date="@$TAR_TIME_FINISHED")'",
-					"Elapsed" : "'$(($TAR_TIME_FINISHED - $TAR_TIME_START))'"
+					"Path" : "'$BACKUP_SOURCE'",
+					"Size" : "'$(getFileDiskUsage ${BACKUP_SOURCE} b)'"
 				},
-				"Tar":
-				{
-					"Tar Options": "'$TAR_OPTIONS'",
-					"Compressor":"'$COMPRESSOR'",
-					"Exclude Paterns" : "'$([[ -f $EXCLUDE_FILE ]] && cat $EXCLUDE_FILE | tr "\\n" ",")'"
-				} 
-			}
-			,
+			"Destination Directory" :
 			{
-				"Title" : "'$GOOGLE_DRIVE_PARENT_FOLDER_TITLE'",
-				"Type" : "Google Drive Folder",
-				"Id" :	"'$GOOGLE_DRIVE_PARENT_FOLDER_ID'",
-				"Childs" :
-				[
+				"Path" : "'$BACKUP_DESTINATION'",
+				"Free" :
+				{
+					"Start" : "'$(( $BACKUP_DESTINATION_FREE_START * 1024))'",
+					"End" 	: "'$(getMountSpaceFree $BACKUP_DESTINATION b)'"
+				}
+			},
+			"Hostname":"'$(hostname -f)'",
+			"OS":"'$(uname -a)'"
+		},
+		"Time" :
+		{
+			"Start"   : "'$WHOLE_SCRIPT_TIME_START_ISO8601'",
+			"End"     : "'$(date --iso-8601="seconds" --date="@${WHOLE_SCRIPT_TIME_FINISHED}")'",
+			"Elapsed" : "'$(($WHOLE_SCRIPT_TIME_FINISHED - $WHOLE_SCRIPT_TIME_START))'",
+			"Previous":"'$LAST_BACKUP_DATE'"
+		},
+		"Files"	:
+			[
+				{
+					"Name" : "'$TAR_FILE_NAME'",
+					"Path" : "'$BACKUP_DESTINATION'",
+					"Type" : "Tar Archive",
+					"Mime-Type" : "application/x-tar",
+					"Size" : '$(( ${TAR_FILE_SIZE} * 1024 ))',
+					"Tar":
 					{
-						"Title" : "'$TIMESATMP'",
-						"Type" : "Google Drive Folder",
-						"Id" :	"'$GDRIVE_FOLDER_ID'",
-						"Childs" :
-							[
-								
-								'$GDRIVE_GPG_JSON'
-								
-								'$PAR2_FILE_S_GDRIVE_JSON'
-								
-							]
-					}
-				]
-			}
-		]
+						"Tar Options": "'$TAR_OPTIONS'",
+						"Process Time" :
+						{
+							"Start"   : "'$(date --iso-8601="seconds" --date="@$TAR_TIME_START")'",
+							"End" 	  : "'$(date --iso-8601="seconds" --date="@$TAR_TIME_FINISHED")'",
+							"Elapsed" : "'$(($TAR_TIME_FINISHED - $TAR_TIME_START))'"
+						},
+						"Log" : "'$TAR_PACK_LOG_FILE_PACKED'",
+						"Compressor":"'$COMPRESSOR'",
+						"Exclude Paterns" : "'$([[ -f $EXCLUDE_FILE ]] && cat $EXCLUDE_FILE | tr "\\n" ",")'"
+					} 
+				}
+				,
+				{
+					"Title" : "'$GOOGLE_DRIVE_PARENT_FOLDER_TITLE'",
+					"Type" : "Google Drive Folder",
+					"Id" :	"'$GOOGLE_DRIVE_PARENT_FOLDER_ID'",
+					"Childs" :
+					[
+						{
+							"Title" : "'$TIMESATMP'",
+							"Type" : "Google Drive Folder",
+							"Id" :	"'$GDRIVE_FOLDER_ID'",
+							"Childs" :
+								[
+									
+									'$GDRIVE_GPG_JSON'
+									
+									'$PAR2_FILE_S_GDRIVE_JSON'
+									
+								]
+						}
+					]
+				}
+			]
+	} 
+		
+		
 }'
 if [[ -f $JSON_BACKUP_RECORDS_DUMP ]]; then
 	echo "," >> $JSON_BACKUP_RECORDS_DUMP
