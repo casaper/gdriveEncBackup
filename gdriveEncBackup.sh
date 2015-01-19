@@ -423,11 +423,11 @@ for PAR2_FILE in $PAR2_FILE_S; do
 done
 
 # Time save for next backup
-echo $(date +%y%m%d) > $LAST_USED_RECORD_FILE_NAME
+WHOLE_SCRIPT_TIME_START_ISO8601=$(date --iso-8601="seconds" --date="@${WHOLE_SCRIPT_TIME_START}")
+echo $WHOLE_SCRIPT_TIME_START_ISO8601 > $LAST_USED_RECORD_FILE_NAME
 WHOLE_SCRIPT_TIME_FINISHED=$(date +%s)
 WHOLE_SCRIPT_TIME_HUMAN=$(calculateTimeUsed $WHOLE_SCRIPT_TIME_START $WHOLE_SCRIPT_TIME_FINISHED "human")
 WHOLE_SCRIPT_TIME_LOG=$(calculateTimeUsed $WHOLE_SCRIPT_TIME_START $WHOLE_SCRIPT_TIME_FINISHED "log")
-
 BACKUP_JSON_RECORD='
 {
 	"Backup Name" : "'$BACKUP_NAME'",
@@ -449,7 +449,7 @@ BACKUP_JSON_RECORD='
 	"OS":"'$(uname -a)'",
 	"Time" :
 	{
-		"Start"   : "'$(date --iso-8601="seconds" --date="@${WHOLE_SCRIPT_TIME_START}")'",
+		"Start"   : "'$WHOLE_SCRIPT_TIME_START_ISO8601'",
 		"End"     : "'$(date --iso-8601="seconds" --date="@${WHOLE_SCRIPT_TIME_FINISHED}")'",
 		"Elapsed" : "'$(($WHOLE_SCRIPT_TIME_FINISHED - $WHOLE_SCRIPT_TIME_START))'"
 	},
