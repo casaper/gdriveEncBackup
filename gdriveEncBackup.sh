@@ -69,13 +69,13 @@ fi
 if [[ ! $LAST_BACKUP_DATE = "" ]]; then
 	NEWER="--newer $LAST_BACKUP_DATE"
 fi
-
+TAR_OPTIONS_OPTIONAL=""
 # Check if Exclude file for Tar is set
 if [[ ! $EXCLUDE_FILE = "" ]]; then
 	if [[ ! -e $EXCLUDE_FILE ]]; then
 		touch $EXCLUDE_FILE
 	fi
-	TAR_EXCLUDE_PATTERN_FILE=" -X $EXCLUDE_FILE "
+	TAR_OPTIONS_OPTIONAL="${TAR_OPTIONS_OPTIONAL} -X $EXCLUDE_FILE "
 fi
 # Make $COMPRESSOR setting optonal with bzip2 as default
 if [[ $COMPRESSOR = "" ]]; then
@@ -83,7 +83,7 @@ if [[ $COMPRESSOR = "" ]]; then
 fi
 # Make $BASE_DIR optional with defaule to /
 if [[ $BASE_DIR = "" ]]; then
-	BASE_DIR="-C /"
+	TAR_OPTIONS_OPTIONAL="${TAR_OPTIONS_OPTIONAL} -C /"
 fi
 # $PAR2_REDUNDANCY is optional
 if [[ $PAR2_REDUNDANCY = "" ]]; then
@@ -92,7 +92,7 @@ fi
 #####################################################################
 ###  Program options
 #####################################################################
-TAR_OPTIONS="--acls --xattrs -v ${TAR_EXCLUDE_PATTERN_FILE}--${COMPRESSOR} ${NEWER} ${BASE_DIR}" 
+TAR_OPTIONS="--acls --xattrs -v ${TAR_OPTIONS_OPTIONAL}--${COMPRESSOR} ${NEWER}" 
 GPG_OPTIONS="-q --batch --yes -q --compress-algo none"
 PAR2_OPTIONS="-r${PAR2_REDUNDANCY} -qq"
 
