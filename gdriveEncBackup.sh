@@ -35,6 +35,10 @@ GOOGLE_DRIVE_PARENT_FOLDER_ID="SomeScrambleStringFromGoogle" # Parent ID of Goog
 EXCLUDE_FILE="gdriveEncBackup.sh.exclude"      # File with exclude patterns. see "man tar"
 ###################################################################
 
+
+######################################################################
+#	Setting opts from parameters
+######################################################################
 if [[ ! $1 = ""  ]]; then
 	BACKUP_SOURCE=$1
 fi
@@ -53,6 +57,10 @@ fi
 if [[ ! $6 = ""  ]]; then
 	COMPRESSOR=$6
 fi
+######################################################################
+#	Several Variable Checks
+######################################################################
+
 # Check if incremental
 if [[ -e gdriveEncBackup.sh.last.txt ]]; then
 	LAST_BACKUP_DATE=$(cat gdriveEncBackup.sh.last.txt | tr '\n' ' ')
@@ -62,8 +70,13 @@ if [[ ! $LAST_BACKUP_DATE = "" ]]; then
 	NEWER="--newer $LAST_BACKUP_DATE"
 fi
 
+# Check if Exclude file for Tar is set
 if [[ ! $EXCLUDE_FILE = "" ]]; then
 	TAR_EXCLUDE_PATTERN_FILE=" -X $EXCLUDE_FILE "
+fi
+# Make Compressor setting optonal with bzip2 as default
+if [[ $COMPRESSOR = "" ]]; then
+	COMPRESSOR="bzip2"
 fi
 #####################################################################
 ###  Program options
