@@ -98,7 +98,7 @@ fi
 #####################################################################
 ###  Program options Strins
 #####################################################################
-TAR_OPTIONS="--acls --xattrs -v ${TAR_OPTIONS_OPTIONAL}--${COMPRESSOR} ${NEWER}" 
+TAR_OPTIONS="--acls --xattrs -v ${TAR_OPTIONS_OPTIONAL} --${COMPRESSOR} ${NEWER}" 
 GPG_OPTIONS="-q --batch --yes -q --compress-algo none"
 PAR2_OPTIONS="-r${PAR2_REDUNDANCY} -qq"
 
@@ -183,7 +183,7 @@ function calculateTimeUsed {
 # Log the action taken to a CSV database
 echo "${BACKUP_NAME};${TIMESATMP};${BACKUP_SOURCE};${BACKUP_DESTINATION};${COMPRESSOR};${RECEPIENT_EMAIL}" >> gdriveEncBackup.sh.uses.csv
 # Time save for next backup
-echo $TIMESATMP > gdriveEncBackup.sh.last.txt
+echo $(date +%y%d%m) > gdriveEncBackup.sh.last.txt
 # Log the scrypt start at syslog
 logger -t EncTarBak -p local0.info "${BACKUP_NAME}:${TIMESATMP}:${BACKUP_SOURCE}:${BACKUP_DESTINATION}:${COMPRESSOR}:${RECEPIENT_EMAIL}"
 
