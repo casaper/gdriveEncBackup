@@ -54,8 +54,8 @@ fi
 ######################################################################
 
 # Check if incremental
-if [[ -e gdriveEncBackup.sh.last ]]; then
-	LAST_BACKUP_DATE=$(cat gdriveEncBackup.sh.last | tr '\n' ' ')
+if [[ -e $LAST_USED_RECORD_FILE_NAME ]]; then
+	LAST_BACKUP_DATE=$(cat $LAST_USED_RECORD_FILE_NAME | tr '\n' ' ')
 fi
 # if incremental, set the tar --newer option
 if [[ ! $LAST_BACKUP_DATE = "" ]]; then
@@ -180,22 +180,65 @@ function calculateTimeUsed {
 	return 1  # if none of the cases is true, something was wrong with $3
 }
 
+function getFileDiskUsage {
+	FILE_SIZE_1KBLOCKS=$(du -s $1 | tr '\t' ';' | cut -d';' -f1)
+	case $2 in
+		"" )
+			echo $FILE_SIZE_1KBLOCKS
+			return 0
+			;;
+		"M") ## return in Megabites
+			echo $(python -c "print '%d M' % (${FILE_SIZE_1KBLOCKS}/1024.0)")
+			return 0
+			;;
+		"G") ## return in Giga
+			echo $(python -c "print '%d G' % (${FILE_SIZE_1KBLOCKS}/1024/1024.0)")
+			return 0
+			;;
+		"b") ## return in bytes
+			echo $(python -c "print '%d' % (${FILE_SIZE_1KBLOCKS}*1024.0)")
+			return 0
+			;;
+	esac
+}
+function getMountSpaceFree {
+	MOUNT_FREE_1KBLOCKS=$(df --output=avail $1 | tr '\n' ';' | cut -d';' -f2)
+	case $2 in
+		"" )
+			echo $MOUNT_FREE_1KBLOCKS
+			return 0
+			;;
+		"M") ## return in Megabites
+			echo $(python -c "print '%f M' % (${MOUNT_FREE_1KBLOCKS}/1024.0)")
+			return 0
+			;;
+		"G") ## return in Giga
+			echo $(python -c "print '%f G' % (${MOUNT_FREE_1KBLOCKS}/1024/1024.0)")
+			return 0
+			;;
+		"b") ## return in bytes
+			echo $(python -c "print '%d' % (${MOUNT_FREE_1KBLOCKS}*1024.0)")
+			return 0
+			;;
+	esac
+}
+
 
 # Log the scrypt start at syslog
-logger -t EncTarBak -p local0.info "${BACKUP_NAME}:${TIMESATMP}:${BACKUP_SOURCE}:${BACKUP_DESTINATION}:${COMPRESSOR}:${RECEPIENT_EMAIL}"
+logger ${LOGGER_OPTIONS}${LOGGER_SEVERITY_INFO} "${backup_name}:${timesatmp}:${backup_source}:${backup_destination}:${compressor}:${recepient_email}"
 
 ## Several pre checks to be made
 
 # Ceck the source
 if [[ ! ( -e $BACKUP_SOURCE && -d  $BACKUP_SOURCE && -r $BACKUP_SOURCE ) ]]; then
 	if [[ ! -e $BACKUP_SOURCE ]]; then
-		logger -t EncTarBak -p local0.warning "${BACKUP_SOURCE} is non existant."
+		logger ${LOGGER_OPTIONS}${LOGGER_SEVERITY_WARNING} "${backup_source} is non existant."
 		echo -e "\e[41mERROR:\e[49m\e[31m  ${BACKUP_SOURCE} is non existant!"
 	elif [[ ! -d  $BACKUP_SOURCE ]]; then
-		logger -t EncTarBak -p local0.warning "${BACKUP_SOURCE} is not a directory!"
+		logger ${LOGGER_OPTIONS}${LOGGER_SEVERITY_WARNING} "${backup_source} is not a directory!"
 		echo -e "\e[41mERROR:\e[49m\e[31m  ${BACKUP_SOURCE} is not a directory!"
 	elif [[ ! -r $BACKUP_SOURCE ]]; then
-		logger -t EncTarBak -p local0.warning "${BACKUP_SOURCE} is not readable!"
+		logger ${LOGGER_OPTIONS}${LOGGER_SEVERITY_WARNING} "${backup_source} is not readable!"
 		echo -e "\e[41mERROR:\e[49m\e[31m  ${BACKUP_SOURCE} is not readable!"
 	fi
 	exit 1
@@ -203,20 +246,20 @@ fi
 # Check the Destination
 if [[ ! ( -e $BACKUP_DESTINATION && -d  $BACKUP_DESTINATION && -w $BACKUP_DESTINATION ) ]]; then
 	if [[ ! -e $BACKUP_DESTINATION ]]; then
-		logger -t EncTarBak -p local0.warning "${BACKUP_DESTINATION} is non existant."
+		logger ${LOGGER_OPTIONS}${LOGGER_SEVERITY_WARNING} "${backup_destination} is non existant."
 		echo -e "\e[41mERROR:\e[49m\e[31m  ${BACKUP_DESTINATION} is non existant!"
 	elif [[ ! -d  $BACKUP_DESTINATION ]]; then
-		logger -t EncTarBak -p local0.warning "${BACKUP_DESTINATION} is not a directory!"
+		logger ${LOGGER_OPTIONS}${LOGGER_SEVERITY_WARNING} "${backup_destination} is not a directory!"
 		echo -e "\e[41mERROR:\e[49m\e[31m  ${BACKUP_DESTINATION} is not a directory!"
 	elif [[ ! -w $BACKUP_DESTINATION ]]; then
-		logger -t EncTarBak -p local0.warning "${BACKUP_DESTINATION} is not writeable!"
+		logger ${LOGGER_OPTIONS}${LOGGER_SEVERITY_WARNING} "${backup_destination} is not writeable!"
 		echo -e "\e[41mERROR:\e[49m\e[31m  ${BACKUP_DESTINATION} is not writeable!"
 	fi
 	exit 1
 fi
 
 # check source size
-BACKUP_SOURCE_SIZE=$(du -s $BACKUP_SOURCE | tr '\t' ';' | cut -d';' -f1)		# get Size of source in bytes
+BACKUP_SOURCE_SIZE=$(getFileDiskUsage $BACKUP_SOURCE)		# get Size of source in bytes
 # check if enought room on destination's/\/dev\/[a-zA-Z0-9_\-]*\/\([a-zA-Z0-9_\-]*\)/\1/')
 BACKUP_DESTINATION_DIRS=$(echo "${BACKUP_DESTINATION}" | tr '/' ' ')
 for i in $BACKUP_DESTINATION_DIRS; do
@@ -228,10 +271,10 @@ done
 if [[ $BACKUP_DESTINATION_MOUNT = "" ]]; then
 	BACKUP_DESTINATION_MOUNT=" / "
 fi
-BACKUP_DESTINATION_FREE=$(df --output=avail /mnt/backup-one/ | tr '\n' ';' | cut -d';' -f2)
-if [[ $(( $BACKUP_DESTINATION_FREE - $BACKUP_SOURCE_SIZE)) -lt $(( 100 * 1024 )) ]]; then
-	logger -t EncTarBak -p local0.warning "${BACKUP_DESTINATION} full!"
-	echo -e "\e[41mERROR:\e[49m\e[31m  ${BACKUP_DESTINATION} is FULL!\e[0m There is$(df -h --output=avail /mnt/backup-one/ | tr '\n' ';' | cut -d';' -f2) free, but ${BACKUP_SOURCE} is $(( $BACKUP_SOURCE_SIZE / 1024 )) M"
+BACKUP_DESTINATION_FREE_START=$(getMountSpaceFree $BACKUP_DESTINATION)
+if [[ $(( $BACKUP_DESTINATION_FREE_START - $BACKUP_SOURCE_SIZE)) -lt $(( 100 * 1024 )) ]]; then
+	logger ${LOGGER_OPTIONS}${LOGGER_SEVERITY_WARNING} "${backup_destination} full!"
+	echo -e "\e[41mERROR:\e[49m\e[31m  ${BACKUP_DESTINATION} is FULL!\e[0m There is$(getMountSpaceFree $BACKUP_DESTINATION G) G free, but ${BACKUP_SOURCE} is $(getFileDiskUsage $BACKUP_SOURCE G) G"
 	exit 1
 fi
 
@@ -242,13 +285,13 @@ fi
 TAR_FILE_NAME="${BACKUP_NAME}-${TIMESATMP}.tar.${COMPRESSOR}"
 echo -e "\e[32mCompression starts:\e[0m ${BACKUP_SOURCE} is beeing tared with ${COMPRESSOR} to ${BACKUP_DESTINATION}${TAR_FILE_NAME}"	
 TAR_TIME_START=$(date +%s)
-tar ${TAR_OPTIONS} -cf ${BACKUP_DESTINATION}${TAR_FILE_NAME} ${BACKUP_SOURCE} &>"${BACKUP_NAME}-${TIMESATMP}.log"
+tar ${TAR_OPTIONS} -cf ${BACKUP_DESTINATION}${TAR_FILE_NAME} ${BACKUP_SOURCE} &>$TAR_PACK_LOG_FILE
 TAR_EXIT_CODE=$?
 TAR_TIME_FINISHED=$(date +%s)
 TAR_TIME_HUMAN=$(calculateTimeUsed $TAR_TIME_START $TAR_TIME_FINISHED "human")
 TAR_TIME_LOG=$(calculateTimeUsed $TAR_TIME_START $TAR_TIME_FINISHED "log")
 if [[ ! $TAR_EXIT_CODE -eq 0 ]]; then
-	logger -t EncTarBak -p local0.warning "tar compression failed with ${TAR_EXIT_CODE}. Time taken: ${TAR_TIME_LOG}"
+	logger ${LOGGER_OPTIONS}${LOGGER_SEVERITY_WARNING} "tar compression failed with ${tar_exit_code}. time taken: ${tar_time_log}"
 	echo -e "\e[41mERROR:\e[49m\e[31m  Something went wrong with compression of ${TAR_FILE_NAME}. Time: ${TAR_TIME_HUMAN} ExitCode: ${TAR_EXIT_CODE}\e[0m"
 	exit 1
 else
@@ -256,9 +299,9 @@ else
 		mkdir logs
 	fi
 	# pack the log file
-	tar -cjf "logs/${BACKUP_NAME}-${TIMESATMP}.log.tar.bz2" "${BACKUP_NAME}-${TIMESATMP}.log"
-	rm "${BACKUP_NAME}-${TIMESATMP}.log" # clean the uncompressed log
-	logger -t EncTarBak -p local0.info "tar compression successfull. Time taken: ${TAR_TIME_LOG}"
+	tar -cjf $TAR_PACK_LOG_FILE_PACKED $TAR_PACK_LOG_FILE
+	rm $TAR_PACK_LOG_FILE # clean the uncompressed log
+	logger ${LOGGER_OPTIONS}${LOGGER_SEVERITY_INFO} "tar compression successfull. time taken: ${tar_time_log}"
 	echo -e "\e[32mCompression finished:\e[0m Compressing the file ${TAR_FILE_NAME} took: ${TAR_TIME_HUMAN}."
 fi
 
@@ -266,10 +309,10 @@ fi
 #####################################################################
 ##### Encrypt 
 #####################################################################
-TAR_FILE_SIZE=$(du -s ${BACKUP_DESTINATION}${TAR_FILE_NAME} | tr '\t' ';' | cut -d';' -f1)
-BACKUP_DESTINATION_FREE=$(df --output=avail /mnt/backup-one/ | tr '\n' ';' | cut -d';' -f2)
+TAR_FILE_SIZE=$(getFileDiskUsage ${BACKUP_DESTINATION}${TAR_FILE_NAME})
+BACKUP_DESTINATION_FREE=$(getMountSpaceFree $BACKUP_DESTINATION)
 if [[ $(($BACKUP_DESTINATION_FREE - $TAR_FILE_SIZE)) -lt $(( 100 * 1024 )) ]]; then
-	logger -t EncTarBak -p local0.warning "${BACKUP_DESTINATION} full! Not enough room for GPG-file"
+	logger ${LOGGER_OPTIONS}${LOGGER_SEVERITY_WARNING} "${BACKUP_DESTINATION} full! not enough room for gpg-file"
 	echo -e "\e[41mERROR:\e[49m\e[31m  ${BACKUP_DESTINATION} is FULL!\e[0m There is$(df -h --output=avail /mnt/backup-one/ | tr '\n' ';' | cut -d';' -f2) free, but ${TAR_FILE_NAME} is $(( $TAR_FILE_SIZE / 1024 )) M. Cannot encrypt ${TAR_FILE_NAME}."
 	exit 1
 fi
@@ -283,11 +326,11 @@ GPG_TIME_FINISHED=$(date +%s)
 GPG_TIME_HUMAN=$(calculateTimeUsed $GPG_TIME_START $GPG_TIME_FINISHED "human")
 GPG_TIME_LOG=$(calculateTimeUsed $GPG_TIME_START $GPG_TIME_FINISHED "log")
 if [[ ! $GPG_EXIT_CODE -eq 0 ]]; then
-	logger -t EncTarBak -p local0.warning "gpg encryption failed with ${GPG_EXIT_CODE}. Time taken: ${GPG_TIME_LOG}"
+	logger ${LOGGER_OPTIONS}${LOGGER_SEVERITY_WARNING} "gpg encryption failed with ${gpg_exit_code}. time taken: ${gpg_time_log}"
 	echo -e "\e[41mERROR:\e[49m\e[31m  Something went wrong encrypting ${GPG_FILE_NAME}. Time: ${GPG_TIME_HUMAN} ExitCode: ${GPG_EXIT_CODE}\e[0m"
 	exit 1
 else
-	logger -t EncTarBak -p local0.info "tar compression successfull. Time taken: ${GPG_TIME_LOG}"
+	logger ${LOGGER_OPTIONS}${LOGGER_SEVERITY_INFO} "tar compression successfull. time taken: ${gpg_time_log}"
 	echo -e "\e[32mEncryption finished:\e[0m Encrypting the file ${GPG_FILE_NAME} took: ${GPG_TIME_HUMAN}."
 fi
 #####################################################################
@@ -295,10 +338,10 @@ fi
 #####################################################################
 PAR2_FILE_SIZE_CALC_STRING="print '%d' % (${TAR_FILE_SIZE}*0.${PAR2_REDUNDANCY})"
 PAR2_FILE_SIZE=$(python -c "${PAR2_FILE_SIZE_CALC_STRING}")
-BACKUP_DESTINATION_FREE=$(df --output=avail /mnt/backup-one/ | tr '\n' ';' | cut -d';' -f2)
+BACKUP_DESTINATION_FREE=$(getMountSpaceFree $BACKUP_DESTINATION)
 PAR2_FILE_SIZE_ROOM=$(python -c "print '%d' % (${BACKUP_DESTINATION_FREE}-${PAR2_FILE_SIZE})")
 if [[ $PAR2_FILE_SIZE_ROOM -lt $(( 100 * 1024 )) ]]; then
-	logger -t EncTarBak -p local0.warning "${BACKUP_DESTINATION} full! Not enough room for PAR2-Volumes"
+	logger ${LOGGER_OPTIONS}${LOGGER_SEVERITY_WARNING} "${backup_destination} full! not enough room for par2-volumes"
 	echo -e "\e[41mERROR:\e[49m\e[31m  ${BACKUP_DESTINATION} is FULL!\e[0m There is$(df -h --output=avail /mnt/backup-one/ | tr '\n' ';' | cut -d';' -f2) free, but the PAR2-Volumes would take $(( $PAR2_FILE_SIZE / 1024 )) M. Cannot create PAR2-Volumes for ${GPG_FILE_NAME}."
 	exit 1
 fi
@@ -310,11 +353,11 @@ PAR2_TIME_FINISHED=$(date +%s)
 PAR2_TIME_HUMAN=$(calculateTimeUsed $PAR2_TIME_START $PAR2_TIME_FINISHED "human")
 PAR2_TIME_LOG=$(calculateTimeUsed $PAR2_TIME_START $PAR2_TIME_FINISHED "log")
 if [[ ! $PAR2_EXIT_CODE -eq 0 ]]; then
-	logger -t EncTarBak -p local0.warning "par2 creation quit with ${PAR2_EXIT_CODE}. Time taken: ${PAR2_TIME_LOG}"
+	logger ${LOGGER_OPTIONS}${LOGGER_SEVERITY_WARNING} "par2 creation quit with ${par2_exit_code}. time taken: ${par2_time_log}"
 	echo -e "\e[41mERROR:\e[49m\e[31m  Something went wrong trying to create ${GPG_FILE_NAME}.par2. Time: ${PAR2_TIME_HUMAN} ExitCode: ${PAR2_EXIT_CODE}\e[0m"
 	exit 1
 else
-	logger -t EncTarBak -p local0.info "PAR2 creation successfull. Time taken: ${PAR2_TIME_LOG}"
+	logger ${LOGGER_OPTIONS}${LOGGER_SEVERITY_INFO} "par2 creation successfull. time taken: ${par2_time_log}"
 	echo -e "\e[32mPAR2 creation finished:\e[0m PAR2 the file ${GPG_FILE_NAME} took: ${PAR2_TIME_HUMAN}."
 fi
 shred -u ${BACKUP_DESTINATION}$TAR_FILE_NAME
@@ -331,28 +374,135 @@ else
 fi
 GPG_FILE_UPLOAD_ID=$(uploadFile $GDRIVE_FOLDER_ID ${BACKUP_DESTINATION}$GPG_FILE_NAME)
 if [[ $? -eq 0 ]]; then
+	GDRIVE_GPG_JSON='
+{			
+	"Name" : "'$GPG_FILE_NAME'",
+	"Type" : "Google Drive File",
+	"Title" 	  : "'$GPG_FILE_NAME'",
+	"Id" 		  : "'$GPG_FILE_UPLOAD_ID'",
+	"Uploaded At" : "'$(date --iso-8601='seconds')'",
+	"Mime-Type" : "application/pgp-encrypted",
+	"Size" : '$(getFileDiskUsage ${BACKUP_DESTINATION}${GPG_FILE_NAME} b)',
+	"GnuPG":{
+		"Key ID" : "'$RECEPIENT_EMAIL'",
+		"GnuPG Options" : "'$GPG_OPTIONS'"
+	},
+	"Process Time" :
+	{
+		"Start"   : "'$(date --iso-8601='seconds' --date="@${GPG_TIME_START}")'",
+		"End" 	  : "'$(date --iso-8601='seconds' --date="@${GPG_TIME_FINISHED}")'",
+		"Elapsed" : "'$(($GPG_TIME_FINISHED - $GPG_TIME_START))'"
+	}
+}'
 	echo -e "\e[32mUploaded successfully:\e[0m $GPG_FILE_NAME has Id: $GPG_FILE_UPLOAD_ID"
 else
 	echo "error"
 	exit 1
 fi
-PAR2_FILE_S=${BACKUP_DESTINATION}$GPG_FILE_NAME.*par2
+NOW_PWD=$PWD
+PAR2_FILE_S=$(cd ${BACKUP_DESTINATION} && echo $GPG_FILE_NAME.*par2)
+cd $NOW_PWD
 for PAR2_FILE in $PAR2_FILE_S; do
-	PAR_FILE_UPLOAD_ID=$(uploadFile $GDRIVE_FOLDER_ID $PAR2_FILE)
+	PAR_FILE_UPLOAD_ID=$(uploadFile $GDRIVE_FOLDER_ID ${BACKUP_DESTINATION}$PAR2_FILE)
 	if [[ $? -eq 0 ]]; then
+		PAR2_FILE_S_GDRIVE_JSON="${PAR2_FILE_S_GDRIVE_JSON},"'
+{
+	"Name" : "'$PAR2_FILE'",
+	"Title" : "'$PAR2_FILE'",
+	"Id" : "'$PAR_FILE_UPLOAD_ID'",
+	"Type" : "Google Drive File",
+	"Mime-Type" : "application/x-par2",
+	"Uploaded At" : "'$(date --iso-8601="seconds")'",
+	"Size" : '$(getFileDiskUsage ${BACKUP_DESTINATION}${PAR2_FILE} b)'
+}'
 		echo -e "\e[32mUploaded successfully:\e[0m $PAR2_FILE has Id: $PAR_FILE_UPLOAD_ID"
 	else
 		echo "error"
 		exit 1
 	fi
 done
-# Log the action taken to a CSV database
-echo "${BACKUP_NAME};${TIMESATMP};${BACKUP_SOURCE};${BACKUP_DESTINATION};${COMPRESSOR};${RECEPIENT_EMAIL}" >> gdriveEncBackup.sh.uses.csv
+
 # Time save for next backup
-echo $(date +%y%m%d) > gdriveEncBackup.sh.last
+echo $(date +%y%m%d) > $LAST_USED_RECORD_FILE_NAME
 WHOLE_SCRIPT_TIME_FINISHED=$(date +%s)
 WHOLE_SCRIPT_TIME_HUMAN=$(calculateTimeUsed $WHOLE_SCRIPT_TIME_START $WHOLE_SCRIPT_TIME_FINISHED "human")
 WHOLE_SCRIPT_TIME_LOG=$(calculateTimeUsed $WHOLE_SCRIPT_TIME_START $WHOLE_SCRIPT_TIME_FINISHED "log")
-logger -t EncTarBak -p local0.info "Backup successfull. Time taken: ${WHOLE_SCRIPT_TIME_LOG}"
+
+BACKUP_JSON_RECORD='
+{
+	"Backup Name" : "'$BACKUP_NAME'",
+	"Source" :
+		{
+			"Path" : "'$BACKUP_SOURCE'",
+			"Size" : "'$(getFileDiskUsage ${BACKUP_SOURCE} b)'"
+		},
+	"Destination" :
+	{
+		"Path" : "'$BACKUP_DESTINATION'",
+		"Free" :
+		{
+			"Start" : "'$(( $BACKUP_DESTINATION_FREE_START * 1024))'",
+			"End" 	: "'$(getMountSpaceFree $BACKUP_DESTINATION b)'"
+		}
+	},
+	"Host" : "'$(hostname -f)'",
+	"OS":"'$(uname -a)'",
+	"Time" :
+	{
+		"Start"   : "'$(date --iso-8601="seconds" --date="@${WHOLE_SCRIPT_TIME_START}")'",
+		"End"     : "'$(date --iso-8601="seconds" --date="@${WHOLE_SCRIPT_TIME_FINISHED}")'",
+		"Elapsed" : "'$(($WHOLE_SCRIPT_TIME_FINISHED - $WHOLE_SCRIPT_TIME_START))'"
+	},
+	"Files"	:
+		[
+			{
+				"Name" : "'$TAR_FILE_NAME'",
+				"Path" : "'$BACKUP_DESTINATION'",
+				"Type" : "Tar Archive",
+				"Mime-Type" : "application/x-tar",
+				"Size" : '$(( ${TAR_FILE_SIZE} * 1024 ))',
+				"Log" : "'$TAR_PACK_LOG_FILE_PACKED'",
+				"Process Time" :
+				{
+					"Start"   : "'$(date --iso-8601="seconds" --date="@$TAR_TIME_START")'",
+					"End" 	  : "'$(date --iso-8601="seconds" --date="@$TAR_TIME_FINISHED")'",
+					"Elapsed" : "'$(($TAR_TIME_FINISHED - $TAR_TIME_START))'"
+				},
+				"Tar":
+				{
+					"Tar Options": "'$TAR_OPTIONS'",
+					"Compressor":"'$COMPRESSOR'",
+					"Exclude Paterns" : "'$([[ -f $EXCLUDE_FILE ]] && cat $EXCLUDE_FILE | tr "\\n" ",")'"
+				} 
+			}
+			,
+			{
+				"Title" : "'$GOOGLE_DRIVE_PARENT_FOLDER_TITLE'",
+				"Type" : "Google Drive Folder",
+				"Id" :	"'$GOOGLE_DRIVE_PARENT_FOLDER_ID'",
+				"Childs" :
+				[
+					{
+						"Title" : "'$TIMESATMP'",
+						"Type" : "Google Drive Folder",
+						"Id" :	"'$GDRIVE_FOLDER_ID'",
+						"Childs" :
+							[
+								
+								'$GDRIVE_GPG_JSON'
+								
+								'$PAR2_FILE_S_GDRIVE_JSON'
+								
+							]
+					}
+				]
+			}
+		]
+}'
+if [[ -f $JSON_BACKUP_RECORDS_DUMP ]]; then
+	echo "," >> $JSON_BACKUP_RECORDS_DUMP
+fi
+echo $BACKUP_JSON_RECORD >> $JSON_BACKUP_RECORDS_DUMP
+logger ${LOGGER_OPTIONS}${LOGGER_SEVERITY_INFO} "backup successfull. time taken: ${whole_script_time_log}"
 echo -e "\e[32mBackup finished:\e[0m The whole process took ${HOURS} h ${MINUTES} m ${SECONDS} s to be completed."
 exit 0
