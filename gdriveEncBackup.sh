@@ -183,7 +183,7 @@ function calculateTimeUsed {
 # Log the action taken to a CSV database
 echo "${BACKUP_NAME};${TIMESATMP};${BACKUP_SOURCE};${BACKUP_DESTINATION};${COMPRESSOR};${RECEPIENT_EMAIL}" >> gdriveEncBackup.sh.uses.csv
 # Time save for next backup
-echo $(date +%y%d%m) > gdriveEncBackup.sh.last.txt
+echo $(date +%y%m%d) > gdriveEncBackup.sh.last.txt
 # Log the scrypt start at syslog
 logger -t EncTarBak -p local0.info "${BACKUP_NAME}:${TIMESATMP}:${BACKUP_SOURCE}:${BACKUP_DESTINATION}:${COMPRESSOR}:${RECEPIENT_EMAIL}"
 
