@@ -305,7 +305,7 @@ else
 	echo -e "\e[32mCompression finished:\e[0m Compressing the file ${TAR_FILE_NAME} took: ${TAR_TIME_HUMAN}."
 fi
 # Remember Backup Time, right after Tar is finished.
-WHOLE_SCRIPT_TIME_START_ISO8601=$(date --iso-8601="seconds")
+WHOLE_SCRIPT_TIME_START_ISO8601=$(date +%FT%T%z)
 echo $WHOLE_SCRIPT_TIME_START_ISO8601 > $LAST_USED_RECORD_FILE_NAME
 
 #####################################################################
@@ -390,8 +390,8 @@ if [[ $? -eq 0 ]]; then
 		"GnuPG Options" : "'$GPG_OPTIONS'"
 		"Process Time" :
 		{
-			"Start"   : "'$(date --iso-8601='seconds' --date="@${GPG_TIME_START}")'",
-			"End" 	  : "'$(date --iso-8601='seconds' --date="@${GPG_TIME_FINISHED}")'",
+			"Start"   : "'$(date +%FT%T%z --date="@${GPG_TIME_START}")'",
+			"End" 	  : "'$(date +%FT%T%z --date="@${GPG_TIME_FINISHED}")'",
 			"Elapsed" : "'$(($GPG_TIME_FINISHED - $GPG_TIME_START))'"
 		}
 	}
@@ -415,7 +415,7 @@ for PAR2_FILE in $PAR2_FILE_S; do
 	"Id" : "'$PAR_FILE_UPLOAD_ID'",
 	"Type" : "Google Drive File",
 	"Mime-Type" : "application/x-par2",
-	"Uploaded At" : "'$(date --iso-8601="seconds")'",
+	"Uploaded At" : "'$(date +%FT%T%z)'",
 	"Size" : '$(getFileDiskUsage ${BACKUP_DESTINATION}${PAR2_FILE} b)'
 }'
 		echo -e "\e[32mUploaded successfully:\e[0m $PAR2_FILE has Id: $PAR_FILE_UPLOAD_ID"
@@ -454,7 +454,7 @@ BACKUP_JSON_RECORD='
 		"Time" :
 		{
 			"Start"   : "'$WHOLE_SCRIPT_TIME_START_ISO8601'",
-			"End"     : "'$(date --iso-8601="seconds" --date="@${WHOLE_SCRIPT_TIME_FINISHED}")'",
+			"End"     : "'$(date +%FT%T%z --date="@${WHOLE_SCRIPT_TIME_FINISHED}")'",
 			"Elapsed" : "'$(($WHOLE_SCRIPT_TIME_FINISHED - $WHOLE_SCRIPT_TIME_START))'",
 			"Previous":"'$LAST_BACKUP_DATE'"
 		},
@@ -471,8 +471,8 @@ BACKUP_JSON_RECORD='
 						"Tar Options": "'$TAR_OPTIONS'",
 						"Process Time" :
 						{
-							"Start"   : "'$(date --iso-8601="seconds" --date="@$TAR_TIME_START")'",
-							"End" 	  : "'$(date --iso-8601="seconds" --date="@$TAR_TIME_FINISHED")'",
+							"Start"   : "'$(date +%FT%T%z --date="@$TAR_TIME_START")'",
+							"End" 	  : "'$(date +%FT%T%z --date="@$TAR_TIME_FINISHED")'",
 							"Elapsed" : "'$(($TAR_TIME_FINISHED - $TAR_TIME_START))'"
 						},
 						"Log" : "'$TAR_PACK_LOG_FILE_PACKED'",
