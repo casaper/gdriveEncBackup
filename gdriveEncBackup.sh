@@ -68,9 +68,12 @@ if [[ ! $EXCLUDE_FILE = "" ]]; then
 	fi
 	TAR_OPTIONS_OPTIONAL="${TAR_OPTIONS_OPTIONAL} -X $EXCLUDE_FILE "
 fi
+if [[ ! $EXCLUDE_FILE_BACKUP ]]; then
+	TAR_OPTIONS_OPTIONAL="${TAR_OPTIONS_OPTIONAL} --exclude-backups"
+fi
 # Make $COMPRESSOR setting optonal with bzip2 as default
 if [[ $COMPRESSOR = "" ]]; then
-	COMPRESSOR="bzip2"
+	COMPRESSOR="xz"
 fi
 # Make $BASE_DIR optional with defaule to /
 if [[ $BASE_DIR = "" ]]; then
