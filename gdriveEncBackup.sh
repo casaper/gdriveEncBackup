@@ -68,8 +68,17 @@ if [[ ! $EXCLUDE_FILE = "" ]]; then
 	fi
 	TAR_OPTIONS_OPTIONAL="${TAR_OPTIONS_OPTIONAL} -X $EXCLUDE_FILE "
 fi
-if [[ ! $EXCLUDE_FILE_BACKUP ]]; then
+# Exclude backup files
+if [[ $EXCLUDE_FILE_BACKUP = "true" ]]; then
 	TAR_OPTIONS_OPTIONAL="${TAR_OPTIONS_OPTIONAL} --exclude-backups"
+fi
+# exclude cache dirs
+if [[ $EXCLUDE_CACHE_DIRS = "true" ]]; then
+	TAR_OPTIONS_OPTIONAL="${TAR_OPTIONS_OPTIONAL} --exclude-caches"
+fi
+# exclude --exclude-vcs
+if [[ $EXCLUDE_VCS = "true" ]]; then
+	TAR_OPTIONS_OPTIONAL="${TAR_OPTIONS_OPTIONAL} --exclude-vcs"
 fi
 # Make $COMPRESSOR setting optonal with bzip2 as default
 if [[ $COMPRESSOR = "" ]]; then
@@ -83,8 +92,10 @@ fi
 if [[ $PAR2_REDUNDANCY = "" ]]; then
 	PAR2_REDUNDANCY="30"
 fi
+
+
 #####################################################################
-###  Program options
+###  Program options Strins
 #####################################################################
 TAR_OPTIONS="--acls --xattrs -v ${TAR_OPTIONS_OPTIONAL}--${COMPRESSOR} ${NEWER}" 
 GPG_OPTIONS="-q --batch --yes -q --compress-algo none"
