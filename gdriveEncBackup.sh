@@ -54,8 +54,8 @@ fi
 ######################################################################
 
 # Check if incremental
-if [[ -e gdriveEncBackup.sh.last.txt ]]; then
-	LAST_BACKUP_DATE=$(cat gdriveEncBackup.sh.last.txt | tr '\n' ' ')
+if [[ -e gdriveEncBackup.sh.last ]]; then
+	LAST_BACKUP_DATE=$(cat gdriveEncBackup.sh.last | tr '\n' ' ')
 fi
 # if incremental, set the tar --newer option
 if [[ ! $LAST_BACKUP_DATE = "" ]]; then
@@ -98,7 +98,7 @@ fi
 #####################################################################
 ###  Program options Strins
 #####################################################################
-TAR_OPTIONS="--acls --xattrs -v ${TAR_OPTIONS_OPTIONAL} --${COMPRESSOR} ${NEWER}" 
+TAR_OPTIONS="--acls --xattrs -pv ${TAR_OPTIONS_OPTIONAL} --${COMPRESSOR} ${NEWER}" 
 GPG_OPTIONS="-q --batch --yes -q --compress-algo none"
 PAR2_OPTIONS="-r${PAR2_REDUNDANCY} -qq"
 
@@ -183,7 +183,7 @@ function calculateTimeUsed {
 # Log the action taken to a CSV database
 echo "${BACKUP_NAME};${TIMESATMP};${BACKUP_SOURCE};${BACKUP_DESTINATION};${COMPRESSOR};${RECEPIENT_EMAIL}" >> gdriveEncBackup.sh.uses.csv
 # Time save for next backup
-echo $(date +%y%m%d) > gdriveEncBackup.sh.last.txt
+echo $(date +%y%m%d) > gdriveEncBackup.sh.last
 # Log the scrypt start at syslog
 logger -t EncTarBak -p local0.info "${BACKUP_NAME}:${TIMESATMP}:${BACKUP_SOURCE}:${BACKUP_DESTINATION}:${COMPRESSOR}:${RECEPIENT_EMAIL}"
 
@@ -245,7 +245,7 @@ fi
 TAR_FILE_NAME="${BACKUP_NAME}-${TIMESATMP}.tar.${COMPRESSOR}"
 echo -e "\e[32mCompression starts:\e[0m ${BACKUP_SOURCE} is beeing tared with ${COMPRESSOR} to ${BACKUP_DESTINATION}${TAR_FILE_NAME}"	
 TAR_TIME_START=$(date +%s)
-tar ${TAR_OPTIONS} -cpf ${BACKUP_DESTINATION}${TAR_FILE_NAME} ${BACKUP_SOURCE} | echo tar -xz -cf "${BACKUP_NAME}-${TIMESATMP}.log.tar.xz" -T - 2>&1
+tar ${TAR_OPTIONS} -cf ${BACKUP_DESTINATION}${TAR_FILE_NAME} ${BACKUP_SOURCE} &>"${BACKUP_NAME}-${TIMESATMP}.log"
 TAR_EXIT_CODE=$?
 TAR_TIME_FINISHED=$(date +%s)
 TAR_TIME_HUMAN=$(calculateTimeUsed $TAR_TIME_START $TAR_TIME_FINISHED "human")
@@ -254,7 +254,13 @@ if [[ ! $TAR_EXIT_CODE -eq 0 ]]; then
 	logger -t EncTarBak -p local0.warning "tar compression failed with ${TAR_EXIT_CODE}. Time taken: ${TAR_TIME_LOG}"
 	echo -e "\e[41mERROR:\e[49m\e[31m  Something went wrong with compression of ${TAR_FILE_NAME}. Time: ${TAR_TIME_HUMAN} ExitCode: ${TAR_EXIT_CODE}\e[0m"
 	exit 1
-else	
+else
+	if [[ ! -d logs ]]; then # Checking for the log file dir 
+		mkdir logs
+	fi
+	# pack the log file
+	tar -cjf "logs/${BACKUP_NAME}-${TIMESATMP}.log.tar.bz2" "${BACKUP_NAME}-${TIMESATMP}.log"
+	rm "${BACKUP_NAME}-${TIMESATMP}.log" # clean the uncompressed log
 	logger -t EncTarBak -p local0.info "tar compression successfull. Time taken: ${TAR_TIME_LOG}"
 	echo -e "\e[32mCompression finished:\e[0m Compressing the file ${TAR_FILE_NAME} took: ${TAR_TIME_HUMAN}."
 fi
