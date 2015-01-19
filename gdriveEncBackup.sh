@@ -117,7 +117,7 @@ function createDriveFolder() {
 	DRIVE_FOLDER_NAME=$1
 	DRIVE_FOLDER_CREATE_REPLY=$(drive folder -p $2 -t ${DRIVE_FOLDER_NAME})
 	
-	DRIVE_FOLDER_ID=$(echo $DRIVE_FOLDER_CREATE_REPLY | grep -Po "(?<=Id: ).*(?= Title\:)")
+	DRIVE_FOLDER_ID=$(echo $DRIVE_FOLDER_CREATE_REPLY | cut -d' ' -f2)
 	if [[ $? -eq 0 ]]; then
 		echo $DRIVE_FOLDER_ID
 		return 0
@@ -133,7 +133,7 @@ function uploadFile() {
 	FILE_PATH=$2
 	DRIVE_UPLOAD_REPLY=$(drive upload -p $PARENT_ID -f $FILE_PATH)
 	if [[ $? -eq 0 ]]; then
-		echo $(echo $DRIVE_UPLOAD_REPLY | grep -Po "(?<=Id: ).*(?= Title\:)")
+		echo $(echo $DRIVE_UPLOAD_REPLY | cut -d' ' -f2)
 		return 0
 	elif [[ $? -eq 1 ]]; then
 		echo "Something went wrong"
