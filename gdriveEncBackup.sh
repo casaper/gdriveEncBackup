@@ -24,15 +24,15 @@
 #		Backup Options
 #
 ######################################################################
-RECEPIENT_EMAIL="jon@doe.com"                  # Emmail for Encryption. (in Keychain and trusted)
-BACKUP_DESTINATION="/mnt/destination/path/"    # Destination Dir (absolute path)
-BACKUP_SOURCE="/mnt/source/directory"          # Source dir (absolute path)
-BACKUP_NAME="backup-name"                      # Name of the Backup (Will be in filename)
-BASE_DIR="-C /"                                # Base Dir for Tar archive
-COMPRESSOR="xz"                                # lzma,gzip,bzip2,lzip,xz,lzop
-PAR2_REDUNDANCY="30"                           # % of Redundancy the PAR2 shall have
+RECEPIENT_EMAIL="jon@doe.com"          # Emmail for Encryption. (in Keychain and trusted)
+BACKUP_DESTINATION="/mnt/destination/" # Destination Dir (absolute path)
+BACKUP_SOURCE="/mnt/source/directory"  # Source dir (absolute path)
+BACKUP_NAME="backup-name"              # Name of the Backup (Will be in filename)
+BASE_DIR="-C /"                        # Base Dir for Tar archive [optional, default /]
+COMPRESSOR="xz"                        # lzma,gzip,bzip2,lzip,xz,lzop
+PAR2_REDUNDANCY="30"                   # % of Redundancy the PAR2 shall have [optional, default 30]
 GOOGLE_DRIVE_PARENT_FOLDER_ID="SomeScrambleStringFromGoogle" # Parent ID of Google Drive can be found with drive list
-EXCLUDE_FILE="gdriveEncBackup.sh.exclude"      # File with exclude patterns. see "man tar"
+EXCLUDE_FILE="gdriveEncBackup.sh.exclude"      # File with exclude patterns. see "man tar" [optional]
 ###################################################################
 
 
@@ -72,11 +72,22 @@ fi
 
 # Check if Exclude file for Tar is set
 if [[ ! $EXCLUDE_FILE = "" ]]; then
+	if [[ ! -e $EXCLUDE_FILE ]]; then
+		touch $EXCLUDE_FILE
+	fi
 	TAR_EXCLUDE_PATTERN_FILE=" -X $EXCLUDE_FILE "
 fi
-# Make Compressor setting optonal with bzip2 as default
+# Make $COMPRESSOR setting optonal with bzip2 as default
 if [[ $COMPRESSOR = "" ]]; then
 	COMPRESSOR="bzip2"
+fi
+# Make $BASE_DIR optional with defaule to /
+if [[ $BASE_DIR = "" ]]; then
+	BASE_DIR="-C /"
+fi
+# $PAR2_REDUNDANCY is optional
+if [[ $PAR2_REDUNDANCY = "" ]]; then
+	PAR2_REDUNDANCY="30"
 fi
 #####################################################################
 ###  Program options
