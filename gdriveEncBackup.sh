@@ -304,7 +304,9 @@ else
 	logger ${LOGGER_OPTIONS}${LOGGER_SEVERITY_INFO} "tar compression successfull. time taken: ${tar_time_log}"
 	echo -e "\e[32mCompression finished:\e[0m Compressing the file ${TAR_FILE_NAME} took: ${TAR_TIME_HUMAN}."
 fi
-
+# Remember Backup Time, right after Tar is finished.
+WHOLE_SCRIPT_TIME_START_ISO8601=$(date --iso-8601="seconds")
+echo $WHOLE_SCRIPT_TIME_START_ISO8601 > $LAST_USED_RECORD_FILE_NAME
 
 #####################################################################
 ##### Encrypt 
@@ -422,9 +424,7 @@ for PAR2_FILE in $PAR2_FILE_S; do
 	fi
 done
 
-# Time save for next backup
-WHOLE_SCRIPT_TIME_START_ISO8601=$(date --iso-8601="seconds" --date="@${WHOLE_SCRIPT_TIME_START}")
-echo $WHOLE_SCRIPT_TIME_START_ISO8601 > $LAST_USED_RECORD_FILE_NAME
+
 WHOLE_SCRIPT_TIME_FINISHED=$(date +%s)
 WHOLE_SCRIPT_TIME_HUMAN=$(calculateTimeUsed $WHOLE_SCRIPT_TIME_START $WHOLE_SCRIPT_TIME_FINISHED "human")
 WHOLE_SCRIPT_TIME_LOG=$(calculateTimeUsed $WHOLE_SCRIPT_TIME_START $WHOLE_SCRIPT_TIME_FINISHED "log")
