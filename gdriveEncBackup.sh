@@ -32,6 +32,7 @@ BASE_DIR="-C /"                                # Base Dir for Tar archive
 COMPRESSOR="xz"                                # lzma,gzip,bzip2,lzip,xz,lzop
 PAR2_REDUNDANCY="30"                           # % of Redundancy the PAR2 shall have
 GOOGLE_DRIVE_PARENT_FOLDER_ID="SomeScrambleStringFromGoogle" # Parent ID of Google Drive can be found with drive list
+EXCLUDE_FILE="gdriveEncBackup.sh.exclude"      # File with exclude patterns. see "man tar"
 ###################################################################
 
 if [[ ! $1 = ""  ]]; then
@@ -61,11 +62,13 @@ if [[ ! $LAST_BACKUP_DATE = "" ]]; then
 	NEWER="--newer $LAST_BACKUP_DATE"
 fi
 
-
+if [[ ! $EXCLUDE_FILE = "" ]]; then
+	TAR_EXCLUDE_PATTERN_FILE=" -X $EXCLUDE_FILE "
+fi
 #####################################################################
 ###  Program options
 #####################################################################
-TAR_OPTIONS="--acls --xattrs --${COMPRESSOR} ${NEWER} ${BASE_DIR}" 
+TAR_OPTIONS="--acls --xattrs -v ${TAR_EXCLUDE_PATTERN_FILE}--${COMPRESSOR} ${NEWER} ${BASE_DIR}" 
 GPG_OPTIONS="-q --batch --yes -q --compress-algo none"
 PAR2_OPTIONS="-r${PAR2_REDUNDANCY} -qq"
 
@@ -212,7 +215,7 @@ fi
 TAR_FILE_NAME="${BACKUP_NAME}-${TIMESATMP}.tar.${COMPRESSOR}"
 echo -e "\e[32mCompression starts:\e[0m ${BACKUP_SOURCE} is beeing tared with ${COMPRESSOR} to ${BACKUP_DESTINATION}${TAR_FILE_NAME}"	
 TAR_TIME_START=$(date +%s)
-tar ${TAR_OPTIONS} -cpf ${BACKUP_DESTINATION}${TAR_FILE_NAME} ${BACKUP_SOURCE}
+tar ${TAR_OPTIONS} -cpf ${BACKUP_DESTINATION}${TAR_FILE_NAME} ${BACKUP_SOURCE} | tar -xz -cf "${BACKUP_NAME}-${TIMESATMP}.log.tar.xz" -T -
 TAR_EXIT_CODE=$?
 TAR_TIME_FINISHED=$(date +%s)
 TAR_TIME_HUMAN=$(calculateTimeUsed $TAR_TIME_START $TAR_TIME_FINISHED "human")
@@ -221,7 +224,7 @@ if [[ ! $TAR_EXIT_CODE -eq 0 ]]; then
 	logger -t EncTarBak -p local0.warning "tar compression failed with ${TAR_EXIT_CODE}. Time taken: ${TAR_TIME_LOG}"
 	echo -e "\e[41mERROR:\e[49m\e[31m  Something went wrong with compression of ${TAR_FILE_NAME}. Time: ${TAR_TIME_HUMAN} ExitCode: ${TAR_EXIT_CODE}\e[0m"
 	exit 1
-else
+else	
 	logger -t EncTarBak -p local0.info "tar compression successfull. Time taken: ${TAR_TIME_LOG}"
 	echo -e "\e[32mCompression finished:\e[0m Compressing the file ${TAR_FILE_NAME} took: ${TAR_TIME_HUMAN}."
 fi
