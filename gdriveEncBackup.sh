@@ -180,10 +180,7 @@ function calculateTimeUsed {
 	return 1  # if none of the cases is true, something was wrong with $3
 }
 
-# Log the action taken to a CSV database
-echo "${BACKUP_NAME};${TIMESATMP};${BACKUP_SOURCE};${BACKUP_DESTINATION};${COMPRESSOR};${RECEPIENT_EMAIL}" >> gdriveEncBackup.sh.uses.csv
-# Time save for next backup
-echo $(date +%y%m%d) > gdriveEncBackup.sh.last
+
 # Log the scrypt start at syslog
 logger -t EncTarBak -p local0.info "${BACKUP_NAME}:${TIMESATMP}:${BACKUP_SOURCE}:${BACKUP_DESTINATION}:${COMPRESSOR}:${RECEPIENT_EMAIL}"
 
@@ -349,7 +346,10 @@ for PAR2_FILE in $PAR2_FILE_S; do
 		exit 1
 	fi
 done
-
+# Log the action taken to a CSV database
+echo "${BACKUP_NAME};${TIMESATMP};${BACKUP_SOURCE};${BACKUP_DESTINATION};${COMPRESSOR};${RECEPIENT_EMAIL}" >> gdriveEncBackup.sh.uses.csv
+# Time save for next backup
+echo $(date +%y%m%d) > gdriveEncBackup.sh.last
 WHOLE_SCRIPT_TIME_FINISHED=$(date +%s)
 WHOLE_SCRIPT_TIME_HUMAN=$(calculateTimeUsed $WHOLE_SCRIPT_TIME_START $WHOLE_SCRIPT_TIME_FINISHED "human")
 WHOLE_SCRIPT_TIME_LOG=$(calculateTimeUsed $WHOLE_SCRIPT_TIME_START $WHOLE_SCRIPT_TIME_FINISHED "log")
