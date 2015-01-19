@@ -19,22 +19,13 @@
 #  gdriveEncBackup.sh [Source] [Destination] [Name] [Email] [DriveParent]	[compressor]
 ######################################################################
 
-######################################################################
-#
-#		Backup Options
-#
-######################################################################
-RECEPIENT_EMAIL="jon@doe.com"          # Emmail for Encryption. (in Keychain and trusted)
-BACKUP_DESTINATION="/mnt/destination/" # Destination Dir (absolute path)
-BACKUP_SOURCE="/mnt/source/directory"  # Source dir (absolute path)
-BACKUP_NAME="backup-name"              # Name of the Backup (Will be in filename)
-BASE_DIR="-C /"                        # Base Dir for Tar archive [optional, default /]
-COMPRESSOR="xz"                        # lzma,gzip,bzip2,lzip,xz,lzop
-PAR2_REDUNDANCY="30"                   # % of Redundancy the PAR2 shall have [optional, default 30]
-GOOGLE_DRIVE_PARENT_FOLDER_ID="SomeScrambleStringFromGoogle" # Parent ID of Google Drive can be found with drive list
-EXCLUDE_FILE="gdriveEncBackup.sh.exclude"      # File with exclude patterns. see "man tar" [optional]
-###################################################################
-
+# Check and Get the config file
+if [[ ! -f gdriveEncBackup.sh.conf ]]; then
+	echo -e "\e[41mERROR:\e[49m\e[31m The configurations from gdriveEncBackup.sh.conf are missing!"
+	exit 1
+else
+	source gdriveEncBackup.sh.conf
+fi
 
 ######################################################################
 #	Setting opts from parameters
@@ -239,7 +230,7 @@ fi
 TAR_FILE_NAME="${BACKUP_NAME}-${TIMESATMP}.tar.${COMPRESSOR}"
 echo -e "\e[32mCompression starts:\e[0m ${BACKUP_SOURCE} is beeing tared with ${COMPRESSOR} to ${BACKUP_DESTINATION}${TAR_FILE_NAME}"	
 TAR_TIME_START=$(date +%s)
-tar ${TAR_OPTIONS} -cpf ${BACKUP_DESTINATION}${TAR_FILE_NAME} ${BACKUP_SOURCE} | tar -xz -cf "${BACKUP_NAME}-${TIMESATMP}.log.tar.xz" -T -
+tar ${TAR_OPTIONS} -cpf ${BACKUP_DESTINATION}${TAR_FILE_NAME} ${BACKUP_SOURCE} | echo tar -xz -cf "${BACKUP_NAME}-${TIMESATMP}.log.tar.xz" -T - 2>&1
 TAR_EXIT_CODE=$?
 TAR_TIME_FINISHED=$(date +%s)
 TAR_TIME_HUMAN=$(calculateTimeUsed $TAR_TIME_START $TAR_TIME_FINISHED "human")
