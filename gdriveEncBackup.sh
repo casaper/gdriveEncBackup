@@ -20,6 +20,8 @@
 #  
 #	all parameters are optional, set the config in gdriveEncBackup.sh.conf 
 
+WHOLE_SCRIPT_TIME_START=$(date +%s)	  # Record Script Start Time
+TIMESATMP=$(date +%Y-%m-%d)
 # Check and Get the config file
 if [[ ! -f gdriveEncBackup.sh.conf ]]; then
 	echo -e "\e[41mERROR:\e[49m\e[31m The configurations from gdriveEncBackup.sh.conf are missing!"
@@ -104,8 +106,6 @@ PAR2_OPTIONS="-r${PAR2_REDUNDANCY} -qq"
 
 
 
-WHOLE_SCRIPT_TIME_START=$(date +%s)	  # Record Script Start Time
-TIMESATMP=$(date +%Y-%m-%d)
 
 #####################################################################
 ###  FUNCTIONS
@@ -382,17 +382,17 @@ if [[ $? -eq 0 ]]; then
 	"Type" : "Google Drive File",
 	"Title" 	  : "'$GPG_FILE_NAME'",
 	"Id" 		  : "'$GPG_FILE_UPLOAD_ID'",
-	"Uploaded At" : "'$(date --iso-8601='seconds')'",
+	"Uploaded At" : "'$(date +%FT%T%z)'",
 	"Mime-Type" : "application/pgp-encrypted",
 	"Size" : '$(getFileDiskUsage ${BACKUP_DESTINATION}${GPG_FILE_NAME} b)',
 	"GnuPG":{
 		"Key ID" : "'$RECEPIENT_EMAIL'",
-		"GnuPG Options" : "'$GPG_OPTIONS'"
+		"GnuPG Options" : "'$GPG_OPTIONS'",
 		"Process Time" :
 		{
 			"Start"   : "'$(date +%FT%T%z --date="@${GPG_TIME_START}")'",
 			"End" 	  : "'$(date +%FT%T%z --date="@${GPG_TIME_FINISHED}")'",
-			"Elapsed" : "'$(($GPG_TIME_FINISHED - $GPG_TIME_START))'"
+			"Elapsed" : '$(($GPG_TIME_FINISHED - $GPG_TIME_START))'
 		}
 	}
 		
@@ -437,15 +437,15 @@ BACKUP_JSON_RECORD='
 			"Source Directory" :
 				{
 					"Path" : "'$BACKUP_SOURCE'",
-					"Size" : "'$(getFileDiskUsage ${BACKUP_SOURCE} b)'"
+					"Size" : '$(getFileDiskUsage ${BACKUP_SOURCE} b)'
 				},
 			"Destination Directory" :
 			{
 				"Path" : "'$BACKUP_DESTINATION'",
 				"Free" :
 				{
-					"Start" : "'$(( $BACKUP_DESTINATION_FREE_START * 1024))'",
-					"End" 	: "'$(getMountSpaceFree $BACKUP_DESTINATION b)'"
+					"Start" : '$(( $BACKUP_DESTINATION_FREE_START * 1024))',
+					"End" 	: '$(getMountSpaceFree $BACKUP_DESTINATION b)'
 				}
 			},
 			"Hostname":"'$(hostname -f)'",
@@ -473,7 +473,7 @@ BACKUP_JSON_RECORD='
 						{
 							"Start"   : "'$(date +%FT%T%z --date="@$TAR_TIME_START")'",
 							"End" 	  : "'$(date +%FT%T%z --date="@$TAR_TIME_FINISHED")'",
-							"Elapsed" : "'$(($TAR_TIME_FINISHED - $TAR_TIME_START))'"
+							"Elapsed" : '$(($TAR_TIME_FINISHED - $TAR_TIME_START))'
 						},
 						"Log" : "'$TAR_PACK_LOG_FILE_PACKED'",
 						"Compressor":"'$COMPRESSOR'",
