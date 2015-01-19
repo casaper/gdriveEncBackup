@@ -16,8 +16,9 @@
 #  GoogleDrive 																
 #																					
 #  usage:																		
-#  gdriveEncBackup.sh [Source] [Destination] [Name] [Email] [DriveParent]	[compressor]
-######################################################################
+#  gdriveEncBackup.sh [Source] [Destination] [Name] [Email] [DriveParent]
+#  
+#	all parameters are optional, set the config in gdriveEncBackup.sh.conf 
 
 # Check and Get the config file
 if [[ ! -f gdriveEncBackup.sh.conf ]]; then
