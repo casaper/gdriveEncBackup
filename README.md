@@ -6,6 +6,9 @@
 * uploads the gpg encrypted archive plus par2 sets to gDrive
 * dumps all the information related to the backup as JSON to a dumpfile (for possible future use)
 
+I created this for making my headless and unattended remote backups to Google Drive. Public Key encryption 
+offers the benefit of having the files backed up stored strongly encrypted on Google Drive and no sensitive 
+secret is stored on the headless machine either.
 
 ### Needs:
 
