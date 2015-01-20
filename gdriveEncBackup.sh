@@ -385,31 +385,31 @@ if [[ $? -eq 0 ]]; then
 	"Uploaded At" : "'$(date +%FT%T%z)'",
 	"Mime-Type" : "application/pgp-encrypted",
 	"Size" : '$(getFileDiskUsage ${BACKUP_DESTINATION}${GPG_FILE_NAME} b)',
-	"Encrypted File":
-		{
-			"Name" : "'$TAR_FILE_NAME'",
-			"Path" : "'$BACKUP_DESTINATION'",
-			"Type" : "Tar Archive",
-			"Mime-Type" : "application/x-tar",
-			"Size" : '$(( ${TAR_FILE_SIZE} * 1024 ))',
-			"Tar":
-			{
-				"Tar Options": "'$TAR_OPTIONS'",
-				"Process Time" :
-				{
-					"Start"   : "'$(date +%FT%T%z --date="@$TAR_TIME_START")'",
-					"End" 	  : "'$(date +%FT%T%z --date="@$TAR_TIME_FINISHED")'",
-					"Elapsed" : '$(($TAR_TIME_FINISHED - $TAR_TIME_START))'
-				},
-				"Log" : "'$TAR_PACK_LOG_FILE_PACKED'",
-				"Compressor":"'$COMPRESSOR'",
-				"Exclude Paterns" : "'$([[ -f $EXCLUDE_FILE ]] && cat $EXCLUDE_FILE | tr "\\n" ",")'"
-			} 
-		}
-	,
 	"GnuPG":{
 		"Key ID" : "'$RECEPIENT_EMAIL'",
 		"GnuPG Options" : "'$GPG_OPTIONS'",
+		"Encrypted File":
+			{
+				"Name" : "'$TAR_FILE_NAME'",
+				"Path" : "'$BACKUP_DESTINATION'",
+				"Type" : "Tar Archive",
+				"Mime-Type" : "application/x-tar",
+				"Size" : '$(( ${TAR_FILE_SIZE} * 1024 ))',
+				"Tar":
+				{
+					"Tar Options": "'$TAR_OPTIONS'",
+					"Process Time" :
+					{
+						"Start"   : "'$(date +%FT%T%z --date="@$TAR_TIME_START")'",
+						"End" 	  : "'$(date +%FT%T%z --date="@$TAR_TIME_FINISHED")'",
+						"Elapsed" : '$(($TAR_TIME_FINISHED - $TAR_TIME_START))'
+					},
+					"Log" : "'$TAR_PACK_LOG_FILE_PACKED'",
+					"Compressor":"'$COMPRESSOR'",
+					"Exclude Paterns" : "'$([[ -f $EXCLUDE_FILE ]] && cat $EXCLUDE_FILE | tr "\\n" ",")'"
+				} 
+			}
+		,
 		"Process Time" :
 		{
 			"Start"   : "'$(date +%FT%T%z --date="@${GPG_TIME_START}")'",
