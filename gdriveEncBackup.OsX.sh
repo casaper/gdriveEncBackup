@@ -390,6 +390,27 @@ if [[ $? -eq 0 ]]; then
 	{
 		"Key ID" : "'$RECEPIENT_EMAIL'",
 		"GnuPG Options" : "'$GPG_OPTIONS'",
+		"Encrypted File":
+		{
+			"Name" : "'$TAR_FILE_NAME'",
+			"Path" : "'$BACKUP_DESTINATION'",
+			"Type" : "Tar Archive",
+			"Mime-Type" : "application/x-tar",
+			"Size" : '$(( ${TAR_FILE_SIZE} * 1024 ))',
+			"Tar":
+			{
+				"Tar Options": "'$TAR_OPTIONS'",
+				"Process Time" :
+				{
+					"Start"   : "'$(date -r "$TAR_TIME_START" +%FT%T%z)'",
+					"End" 	  : "'$(date -r "$TAR_TIME_FINISHED" +%FT%T%z)'",
+					"Elapsed" : '$(($TAR_TIME_FINISHED - $TAR_TIME_START))'
+				},
+				"Log" : "'$TAR_PACK_LOG_FILE_PACKED'",
+				"Compressor":"'$COMPRESSOR'",
+				"Exclude Paterns" : "'$([[ -f $EXCLUDE_FILE ]] && cat $EXCLUDE_FILE | tr "\\n" ",")'"
+			} 
+		},
 		"Process Time" :
 		{
 			"Start"   : "'$(date -r "${GPG_TIME_START}" +%FT%T%z)'",
@@ -462,27 +483,6 @@ BACKUP_JSON_RECORD='
 		},
 		"Files"	:
 			[
-				{
-					"Name" : "'$TAR_FILE_NAME'",
-					"Path" : "'$BACKUP_DESTINATION'",
-					"Type" : "Tar Archive",
-					"Mime-Type" : "application/x-tar",
-					"Size" : '$(( ${TAR_FILE_SIZE} * 1024 ))',
-					"Tar":
-					{
-						"Tar Options": "'$TAR_OPTIONS'",
-						"Process Time" :
-						{
-							"Start"   : "'$(date -r "$TAR_TIME_START" +%FT%T%z)'",
-							"End" 	  : "'$(date -r "$TAR_TIME_FINISHED" +%FT%T%z)'",
-							"Elapsed" : '$(($TAR_TIME_FINISHED - $TAR_TIME_START))'
-						},
-						"Log" : "'$TAR_PACK_LOG_FILE_PACKED'",
-						"Compressor":"'$COMPRESSOR'",
-						"Exclude Paterns" : "'$([[ -f $EXCLUDE_FILE ]] && cat $EXCLUDE_FILE | tr "\\n" ",")'"
-					} 
-				}
-				,
 				{
 					"Title" : "'$GOOGLE_DRIVE_PARENT_FOLDER_TITLE'",
 					"Type" : "Google Drive Folder",
