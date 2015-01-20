@@ -18,3 +18,5 @@ secret is stored on the headless machine either.
 * [Google Drive](https://www.google.com/intl/en/drive/ "Welcome page")
 
 Tested only on Ubuntu Thrusty.
+
+And a only slightly on OS X Yosemite tested version. *OS X's date, df, du, act different*
